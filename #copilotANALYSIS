@@ -1,0 +1,99 @@
+GitHub Copilot: To analyze your application for security issues and dependencies, I need to review the source code in your active editor. Please select the relevant code or provide details about the application, such as its programming language, framework, and any external libraries or dependencies it uses.
+
+If you want me to analyze the code, you can select it, and I will review it for potential security vulnerabilities. Additionally, I can help identify dependencies required to run the application in the Visual Studio Code environment. Let me know how you'd like to proceed!
+
+GitHub Copilot: ### Security Issues
+
+1. **Hardcoded Secrets**:
+
+   - The `crypto_base_key` and `hmac_base_key` are hardcoded in the code. This is a significant security risk as anyone with access to the code can misuse these keys.
+   - The `authConfig` object contains sensitive fields like `client_id`, `client_secret`, and `refresh_token`, which are left empty but should never be hardcoded in production.
+
+   **Recommendation**: Use environment variables or a secure secrets management system to store sensitive information.
+
+2. **Weak Session Management**:
+
+   - The session token is stored in a cookie without proper encryption or validation mechanisms. Although `HttpOnly`, `Secure`, and `SameSite` flags are set, the session management logic is vulnerable to replay attacks.
+   - The session expiration logic is based on a timestamp comparison, which can be tampered with if the session token is compromised.
+
+   **Recommendation**: Use a secure, signed, and encrypted session token (e.g., JWT with a secret key) and validate it on every request.
+
+3. **Insecure Password Storage**:
+
+   - User credentials (`username` and `password`) are stored in plaintext in the `authConfig.users_list` array. This is a critical vulnerability.
+
+   **Recommendation**: Never store passwords in plaintext. Use a secure hashing algorithm like bcrypt or Argon2 to hash passwords before storing them.
+
+4. **Lack of Input Validation**:
+
+   - User inputs, such as `username`, `password`, and query parameters, are not properly sanitized or validated. This can lead to injection attacks (e.g., SQL injection, XSS).
+   - Example: The `SearchFunction.formatSearchKeyword` function attempts to sanitize input but does not cover all edge cases.
+
+   **Recommendation**: Use a robust input validation library to sanitize and validate all user inputs.
+
+5. **Exposed APIs**:
+
+   - The app.js and homepage.js endpoints fetch external scripts and serve them without validation. This can lead to supply chain attacks if the external source is compromised.
+   - The `/google_callback` endpoint processes OAuth tokens but lacks proper error handling and validation.
+
+   **Recommendation**: Validate all external resources and implement strict Content Security Policies (CSP).
+
+6. **Insecure Cryptographic Practices**:
+
+   - The `encryptString` and `decryptString` functions use AES-CBC without proper key management. The IV is hardcoded, which defeats the purpose of using an IV.
+   - The `genIntegrity` function uses HMAC but does not securely manage the key.
+
+   **Recommendation**: Use a secure cryptographic library (e.g., Node.js `crypto` module) and follow best practices for key and IV management.
+
+7. **Open Redirect Vulnerability**:
+
+   - The `/findpath` and `/google_callback` endpoints redirect users based on query parameters without proper validation. This can be exploited for phishing attacks.
+
+   **Recommendation**: Validate and sanitize all redirect URLs to ensure they point to trusted domains.
+
+8. **Excessive Permissions**:
+
+   - The Google Drive API scopes (`https://www.googleapis.com/auth/drive`) grant full access to the user's Drive. This is excessive and can lead to data breaches if the access token is compromised.
+
+   **Recommendation**: Use the principle of least privilege and request only the necessary API scopes.
+
+---
+
+### Dependencies Needed for VS Code Environment
+
+1. **Node.js**:
+
+   - The application is written in JavaScript and uses Node.js features like `fetch` and `crypto`. Install Node.js (LTS version recommended).
+
+2. **External Libraries**:
+
+   - The application relies on external libraries like:
+     - **jQuery**: Loaded via CDN (`https://code.jquery.com/jquery-3.7.1.min.js`).
+     - **Bootstrap**: Loaded via CDN (`https://cdn.jsdelivr.net/npm/bootstrap@5.3.3`).
+     - **PDF.js**: Loaded via CDN (`https://cdn.jsdelivr.net/npm/pdfjs-dist`).
+     - **Marked.js**: Loaded via CDN (`https://cdn.jsdelivr.net/npm/marked`).
+
+   **Recommendation**: Use a package manager like `npm` or `yarn` to manage dependencies locally instead of relying on CDNs.
+
+3. **Environment Variables**:
+
+   - Set up environment variables for sensitive information like `client_id`, `client_secret`, and `refresh_token`.
+
+4. **Linting and Formatting**:
+
+   - Install ESLint and Prettier extensions in VS Code to ensure code quality and consistency.
+
+5. **Testing Framework**:
+   - Add a testing framework like Jest or Mocha to write unit tests for critical functions (e.g., encryption, session management).
+
+---
+
+### Summary of Recommendations
+
+- Secure sensitive data using environment variables.
+- Implement proper input validation and output encoding.
+- Use secure cryptographic practices and avoid hardcoding keys/IVs.
+- Improve session management and password storage mechanisms.
+- Validate all external resources and redirect URLs.
+- Minimize API permissions to follow the principle of least privilege.
+- Use local dependency management instead of relying on CDNs.
